@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: . 
+      dockerfile: ./docker/apache/Dockerfile 
+    container_name: mini-erp-app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./app:/var/www/html
+    depends_on:
+      - db
+    networks:
+      - mini-erp
+
+  db:
+    image: mysql:5.7
+    container_name: mini-erp-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mini_erp
+      TZ: America/Sao_Paulo
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - mini-erp
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: mini-erp-phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - mini-erp
+
+volumes:
+  db_data:
+
+networks:
+  mini-erp:
+   
