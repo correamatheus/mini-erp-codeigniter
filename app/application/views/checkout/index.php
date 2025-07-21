@@ -166,9 +166,8 @@
         });
 
         cepInput.addEventListener('blur', function() {
-            const cep = this.value.replace(/\D/g, ''); // Remove o hífen para enviar para a API
+            const cep = this.value.replace(/\D/g, ''); 
             if (cep.length === 8) {
-                // Remove validação anterior
                 this.classList.remove('is-invalid');
                 document.getElementById('cep-feedback').textContent = '';
 
