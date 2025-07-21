@@ -4,93 +4,88 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Migration_Create_schema extends CI_Migration {
 
     public function up() {
-        // Garante que o InnoDB será usado, que suporta chaves estrangeiras
+        // Garante que o InnoDB será usado
         $this->db->query('SET default_storage_engine=InnoDB');
 
-        // --- 1. Tabela de Produtos (Apenas a "casca" do produto) ---
-        $this->dbforge->add_field([
-            'id' => ['type' => 'BIGINT', 'unsigned' => TRUE, 'auto_increment' => TRUE],
-            'nome' => ['type' => 'VARCHAR', 'constraint' => 255],
-            'descricao' => ['type' => 'TEXT', 'null' => TRUE],
-            'created_at' => ['type' => 'TIMESTAMP', 'default' => 'CURRENT_TIMESTAMP'],
-            'updated_at' => ['type' => 'TIMESTAMP', 'default' => 'CURRENT_TIMESTAMP', 'on update' => 'CURRENT_TIMESTAMP'],
-        ]);
-        $this->dbforge->add_key('id', TRUE);
-        $this->dbforge->create_table('produtos');
+        // --- Tabela de Produtos ---
+        $this->db->query("CREATE TABLE produtos (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            nome VARCHAR(255) NOT NULL,
+            descricao TEXT NULL,
+            created_at TIMESTAMP NULL DEFAULT NULL,
+            updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;");
 
-        // --- 2. Tabela de Variações de Produto (O item real com preço) ---
-        $this->dbforge->add_field([
-            'id' => ['type' => 'BIGINT', 'unsigned' => TRUE, 'auto_increment' => TRUE],
-            'produto_id' => ['type' => 'BIGINT', 'unsigned' => TRUE],
-            'sku' => ['type' => 'VARCHAR', 'constraint' => 100, 'unique' => TRUE],
-            'nome' => ['type' => 'VARCHAR', 'constraint' => 100], // Ex: "Cor: Azul, Tamanho: G"
-            'preco' => ['type' => 'DECIMAL', 'constraint' => '10,2'],
-            'created_at' => ['type' => 'TIMESTAMP', 'default' => 'CURRENT_TIMESTAMP'],
-            'updated_at' => ['type' => 'TIMESTAMP', 'default' => 'CURRENT_TIMESTAMP', 'on update' => 'CURRENT_TIMESTAMP'],
-        ]);
-        $this->dbforge->add_key('id', TRUE);
-        $this->dbforge->add_field('CONSTRAINT fk_variacao_produto FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE');
-        $this->dbforge->create_table('produto_variacoes');
+        // --- Tabela de Variações de Produto ---
+        $this->db->query("CREATE TABLE produto_variacoes (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            produto_id BIGINT UNSIGNED NOT NULL,
+            sku VARCHAR(100) NOT NULL UNIQUE,
+            nome VARCHAR(100) NOT NULL,
+            preco DECIMAL(10,2) NOT NULL,
+            created_at TIMESTAMP NULL DEFAULT NULL,
+            updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            CONSTRAINT fk_variacao_produto FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;");
 
-        // --- 3. Tabela de Estoque ---
-        $this->dbforge->add_field([
-            'id' => ['type' => 'BIGINT', 'unsigned' => TRUE, 'auto_increment' => TRUE],
-            'produto_variacao_id' => ['type' => 'BIGINT', 'unsigned' => TRUE, 'unique' => TRUE], // Relação 1-para-1
-            'quantidade' => ['type' => 'INT', 'default' => 0],
-            'updated_at' => ['type' => 'TIMESTAMP', 'default' => 'CURRENT_TIMESTAMP', 'on update' => 'CURRENT_TIMESTAMP'],
-        ]);
-        $this->dbforge->add_key('id', TRUE);
-        $this->dbforge->add_field('CONSTRAINT fk_estoque_variacao FOREIGN KEY (produto_variacao_id) REFERENCES produto_variacoes(id) ON DELETE CASCADE');
-        $this->dbforge->create_table('estoque');
+        // --- Tabela de Estoque ---
+        $this->db->query("CREATE TABLE estoque (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            produto_variacao_id BIGINT UNSIGNED NOT NULL UNIQUE,
+            quantidade INT NOT NULL DEFAULT 0,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            CONSTRAINT fk_estoque_variacao FOREIGN KEY (produto_variacao_id) REFERENCES produto_variacoes(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;");
 
-        // --- 4. Tabela de Cupons ---
-        $this->dbforge->add_field([
-            'id' => ['type' => 'BIGINT', 'unsigned' => TRUE, 'auto_increment' => TRUE],
-            'codigo' => ['type' => 'VARCHAR', 'constraint' => 50, 'unique' => TRUE],
-            'tipo_desconto' => ['type' => "ENUM('fixo', 'percentual')", 'null' => FALSE],
-            'valor' => ['type' => 'DECIMAL', 'constraint' => '10,2', 'null' => FALSE],
-            'valor_minimo_subtotal' => ['type' => 'DECIMAL', 'constraint' => '10,2', 'default' => 0.00],
-            'data_validade' => ['type' => 'DATE', 'null' => FALSE],
-            'ativo' => ['type' => 'TINYINT', 'constraint' => 1, 'default' => 1],
-            'created_at' => ['type' => 'TIMESTAMP', 'default' => 'CURRENT_TIMESTAMP'],
-        ]);
-        $this->dbforge->add_key('id', TRUE);
-        $this->dbforge->create_table('cupons');
+        // --- Tabela de Cupons ---
+        $this->db->query("CREATE TABLE cupons (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            codigo VARCHAR(50) NOT NULL UNIQUE,
+            tipo_desconto ENUM('fixo', 'percentual') NOT NULL,
+            valor DECIMAL(10,2) NOT NULL,
+            valor_minimo_subtotal DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            data_validade DATE NOT NULL,
+            ativo TINYINT(1) NOT NULL DEFAULT 1,
+            created_at TIMESTAMP NULL DEFAULT NULL,
+            updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;");
 
-        // --- 5. Tabela de Pedidos ---
-        $this->dbforge->add_field([
-            'id' => ['type' => 'BIGINT', 'unsigned' => TRUE, 'auto_increment' => TRUE],
-            'hash_id' => ['type' => 'VARCHAR', 'constraint' => 32, 'unique' => TRUE], // ID público para o cliente
-            'cliente_nome' => ['type' => 'VARCHAR', 'constraint' => 255],
-            'cliente_email' => ['type' => 'VARCHAR', 'constraint' => 255],
-            'cep' => ['type' => 'VARCHAR', 'constraint' => 9],
-            'endereco' => ['type' => 'VARCHAR', 'constraint' => 255],
-            'subtotal' => ['type' => 'DECIMAL', 'constraint' => '10,2'],
-            'valor_frete' => ['type' => 'DECIMAL', 'constraint' => '10,2'],
-            'desconto' => ['type' => 'DECIMAL', 'constraint' => '10,2', 'default' => 0.00],
-            'valor_total' => ['type' => 'DECIMAL', 'constraint' => '10,2'],
-            'status' => ['type' => "ENUM('pendente', 'pago', 'enviado', 'entregue', 'cancelado')", 'default' => 'pendente'],
-            'cupom_id' => ['type' => 'BIGINT', 'unsigned' => TRUE, 'null' => TRUE],
-            'created_at' => ['type' => 'TIMESTAMP', 'default' => 'CURRENT_TIMESTAMP'],
-            'updated_at' => ['type' => 'TIMESTAMP', 'default' => 'CURRENT_TIMESTAMP', 'on update' => 'CURRENT_TIMESTAMP'],
-        ]);
-        $this->dbforge->add_key('id', TRUE);
-        $this->dbforge->add_field('CONSTRAINT fk_pedido_cupom FOREIGN KEY (cupom_id) REFERENCES cupons(id) ON DELETE SET NULL');
-        $this->dbforge->create_table('pedidos');
-        
-        // --- 6. Tabela de Itens do Pedido ---
-        $this->dbforge->add_field([
-            'id' => ['type' => 'BIGINT', 'unsigned' => TRUE, 'auto_increment' => TRUE],
-            'pedido_id' => ['type' => 'BIGINT', 'unsigned' => TRUE],
-            'produto_variacao_id' => ['type' => 'BIGINT', 'unsigned' => TRUE],
-            'quantidade' => ['type' => 'INT', 'unsigned' => TRUE],
-            'preco_unitario' => ['type' => 'DECIMAL', 'constraint' => '10,2'],
-            'nome_produto' => ['type' => 'VARCHAR', 'constraint' => 255] 
-        ]);
-        $this->dbforge->add_key('id', TRUE);
-        $this->dbforge->add_field('CONSTRAINT fk_item_pedido FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE');
-        $this->dbforge->add_field('CONSTRAINT fk_item_variacao FOREIGN KEY (produto_variacao_id) REFERENCES produto_variacoes(id) ON DELETE RESTRICT');
-        $this->dbforge->create_table('pedido_itens');
+        // --- Tabela de Pedidos ---
+        $this->db->query("CREATE TABLE pedidos (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            hash_id VARCHAR(32) NOT NULL UNIQUE,
+            cliente_nome VARCHAR(255) NOT NULL,
+            cliente_email VARCHAR(255) NOT NULL,
+            cep VARCHAR(9) NOT NULL,
+            endereco VARCHAR(255) NOT NULL,
+            subtotal DECIMAL(10,2) NOT NULL,
+            valor_frete DECIMAL(10,2) NOT NULL,
+            desconto DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            valor_total DECIMAL(10,2) NOT NULL,
+            status ENUM('pendente', 'pago', 'enviado', 'entregue', 'cancelado') NOT NULL DEFAULT 'pendente',
+            cupom_id BIGINT UNSIGNED NULL,
+            created_at TIMESTAMP NULL DEFAULT NULL,
+            updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            CONSTRAINT fk_pedido_cupom FOREIGN KEY (cupom_id) REFERENCES cupons(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;");
+
+        // --- Tabela de Itens do Pedido ---
+        $this->db->query("CREATE TABLE pedido_itens (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            pedido_id BIGINT UNSIGNED NOT NULL,
+            produto_variacao_id BIGINT UNSIGNED NOT NULL,
+            quantidade INT UNSIGNED NOT NULL,
+            preco_unitario DECIMAL(10,2) NOT NULL,
+            nome_produto VARCHAR(255) NOT NULL,
+            PRIMARY KEY (id),
+            CONSTRAINT fk_item_pedido FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE,
+            CONSTRAINT fk_item_variacao FOREIGN KEY (produto_variacao_id) REFERENCES produto_variacoes(id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;");
     }
 
     public function down() {
