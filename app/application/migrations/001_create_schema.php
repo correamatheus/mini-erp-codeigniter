@@ -4,7 +4,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Migration_Create_schema extends CI_Migration {
 
     public function up() {
-        // Garante que o InnoDB será usado
         $this->db->query('SET default_storage_engine=InnoDB');
 
         // --- Tabela de Produtos ---

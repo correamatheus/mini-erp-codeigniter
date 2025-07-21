@@ -1,25 +1,26 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="<?= base_url() ?>">Mini ERP</a>
+        <a class="navbar-brand" href="<?= base_url() ?>">Meu E-commerce</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link <?= (isset($active_menu) && $active_menu == 'dashboard') ? 'active' : '' ?>" aria-current="page" href="<?= base_url('dashboard') ?>">Dashboard</a>
+                    <a class="nav-link <?= uri_string() == '' ? 'active' : '' ?>" aria-current="page" href="<?= base_url() ?>">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= (isset($active_menu) && $active_menu == 'produtos') ? 'active' : '' ?>" href="<?= base_url('produtos') ?>">Produtos</a>
+                    <a class="nav-link <?= uri_string() == 'produtos' ? 'active' : '' ?>" href="<?= base_url('produtos') ?>">Produtos</a>
                 </li>
+            </ul>
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link <?= (isset($active_menu) && $active_menu == 'pedidos') ? 'active' : '' ?>" href="<?= base_url('pedidos') ?>">Pedidos</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= (isset($active_menu) && $active_menu == 'estoque') ? 'active' : '' ?>" href="<?= base_url('estoque') ?>">Estoque</a>
+                    <a class="nav-link <?= uri_string() == 'carrinho' ? 'active' : '' ?>" href="<?= base_url('carrinho') ?>">
+                        <i class="bi bi-cart"></i> Carrinho
+                        <span id="cart-count" class="badge bg-secondary ms-1 rounded-pill" style="display: none;">0</span>
+                    </a>
                 </li>
                 </ul>
-            
         </div>
     </div>
 </nav>
